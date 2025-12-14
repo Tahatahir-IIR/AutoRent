@@ -1,0 +1,303 @@
+@page
+@model LocationDeVoiture.Pages.ReservationModel
+@{
+    ViewData["Title"] = "Réservation";
+}
+
+<section class="page-hero">
+    <div class="hero-content">
+        <h1>Réservation</h1>
+        <p>Réservez votre véhicule en quelques clics</p>
+    </div>
+</section>
+
+<div class="container py-5">
+    @if (Model.ReservationReussie)
+    {
+        <div class="success-card text-center">
+            <div class="success-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <h2>Réservation envoyée !</h2>
+            <p class="lead">Votre demande de réservation a été envoyée. Le paiement sera effectué automatiquement le jour du début de la location.</p>
+            
+            <div class="reservation-summary">
+                <h5>Récapitulatif</h5>
+                @if (Model.Voiture != null)
+                {
+                    <p><strong>Véhicule :</strong> @Model.Voiture.Marque @Model.Voiture.Modele</p>
+                }
+                <p><strong>Du :</strong> @Model.Reservation.DateDebut.ToString("dd/MM/yyyy")</p>
+                <p><strong>Au :</strong> @Model.Reservation.DateFin.ToString("dd/MM/yyyy")</p>
+                <p><strong>Durée :</strong> @Model.Reservation.NombreJours jour(s)</p>
+                
+                @if (Model.Reservation.EstUrgent)
+                {
+                    <p class="text-warning"><strong>⚡ Réservation urgente :</strong> +@Model.Reservation.PourcentageFraisUrgence%</p>
+                }
+                @if (Model.Reservation.PourcentageRemise > 0)
+                {
+                    <p class="text-success"><strong>🎉 Remise longue durée :</strong> -@Model.Reservation.PourcentageRemise%</p>
+                }
+                
+                <p><strong>Total :</strong> <span class="price">@Model.Reservation.PrixTotal.ToString("N0") MAD</span></p>
+            </div>
+            
+            <div class="mt-4">
+                <a href="/MesReservations" class="btn btn-primary me-2">
+                    <i class="bi bi-list-check"></i> Voir mes réservations
+                </a>
+                <a href="/Voitures" class="btn btn-outline-primary">Voir nos véhicules</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        @if (!Model.HasActiveCard)
+        {
+            <div class="alert alert-warning mb-4">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Attention :</strong> Vous devez ajouter une carte bancaire avant de pouvoir réserver.
+                <a href="/Account/MesCartes" class="btn btn-warning btn-sm ms-2">
+                    <i class="bi bi-credit-card"></i> Ajouter une carte
+                </a>
+            </div>
+        }
+        
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="reservation-form-card">
+                    <h3><i class="bi bi-person"></i> Vos informations</h3>
+                    <div class="user-info-display mb-4">
+                        <p><strong>Nom :</strong> @Model.CurrentUser?.Prenom @Model.CurrentUser?.Nom</p>
+                        <p><strong>Email :</strong> @Model.CurrentUser?.Email</p>
+                        <p><strong>Téléphone :</strong> @Model.CurrentUser?.PhoneNumber</p>
+                    </div>
+                    
+                    <form method="post" id="reservationForm">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        
+                        <input type="hidden" asp-for="Reservation.VoitureId" id="voitureId" />
+                        
+                        @if (Model.Voiture == null)
+                        {
+                            <h3 class="mt-4"><i class="bi bi-car-front"></i> Choisir un véhicule</h3>
+                            <div class="mb-3">
+                                <select asp-for="Reservation.VoitureId" class="form-select" required id="voitureSelect">
+                                    <option value="">Sélectionnez un véhicule</option>
+                                    @foreach (var v in Model.Voitures)
+                                    {
+                                        <option value="@v.Id" data-prix="@v.PrixParJour">@v.Marque @v.Modele - @v.PrixParJour.ToString("N0") MAD/jour</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        
+                        <h3 class="mt-4"><i class="bi bi-calendar3"></i> Dates de location</h3>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Reservation.DateDebut" class="form-label"></label>
+                                <input asp-for="Reservation.DateDebut" class="form-control" type="date" 
+                                       min="@DateTime.Today.ToString("yyyy-MM-dd")" id="dateDebut" />
+                                <span asp-validation-for="Reservation.DateDebut" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label asp-for="Reservation.DateFin" class="form-label"></label>
+                                <input asp-for="Reservation.DateFin" class="form-control" type="date" 
+                                       min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" id="dateFin" />
+                                <span asp-validation-for="Reservation.DateFin" class="text-danger"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Info sur les promotions -->
+                        <div class="promo-info mt-3">
+                            <h6><i class="bi bi-tags"></i> Offres & Promotions</h6>
+                            <div class="promo-grid">
+                                <div class="promo-item">
+                                    <span class="promo-badge">7+ jours</span>
+                                    <span class="promo-discount">-5%</span>
+                                </div>
+                                <div class="promo-item">
+                                    <span class="promo-badge">14+ jours</span>
+                                    <span class="promo-discount">-8%</span>
+                                </div>
+                                <div class="promo-item">
+                                    <span class="promo-badge">21+ jours</span>
+                                    <span class="promo-discount">-12%</span>
+                                </div>
+                                <div class="promo-item best">
+                                    <span class="promo-badge">30+ jours</span>
+                                    <span class="promo-discount">-15%</span>
+                                </div>
+                            </div>
+                            <p class="text-muted small mt-2">
+                                <i class="bi bi-exclamation-circle"></i> 
+                                Réservation le jour même : +20% de frais d'urgence
+                            </p>
+                        </div>
+                        
+                        <h3 class="mt-4"><i class="bi bi-geo-alt"></i> Lieux</h3>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Reservation.LieuPriseEnCharge" class="form-label"></label>
+                                <select asp-for="Reservation.LieuPriseEnCharge" class="form-select">
+                                    <option value="Casablanca - Aéroport Mohammed V">Casablanca - Aéroport Mohammed V</option>
+                                    <option value="Casablanca - Centre Ville">Casablanca - Centre Ville</option>
+                                    <option value="Rabat - Agence Centrale">Rabat - Agence Centrale</option>
+                                    <option value="Marrakech - Aéroport Menara">Marrakech - Aéroport Menara</option>
+                                    <option value="Marrakech - Guéliz">Marrakech - Guéliz</option>
+                                    <option value="Agadir - Aéroport Al Massira">Agadir - Aéroport Al Massira</option>
+                                    <option value="Fès - Aéroport Saiss">Fès - Aéroport Saiss</option>
+                                    <option value="Tanger - Aéroport Ibn Battouta">Tanger - Aéroport Ibn Battouta</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label asp-for="Reservation.LieuRetour" class="form-label"></label>
+                                <select asp-for="Reservation.LieuRetour" class="form-select">
+                                    <option value="Casablanca - Aéroport Mohammed V">Casablanca - Aéroport Mohammed V</option>
+                                    <option value="Casablanca - Centre Ville">Casablanca - Centre Ville</option>
+                                    <option value="Rabat - Agence Centrale">Rabat - Agence Centrale</option>
+                                    <option value="Marrakech - Aéroport Menara">Marrakech - Aéroport Menara</option>
+                                    <option value="Marrakech - Guéliz">Marrakech - Guéliz</option>
+                                    <option value="Agadir - Aéroport Al Massira">Agadir - Aéroport Al Massira</option>
+                                    <option value="Fès - Aéroport Saiss">Fès - Aéroport Saiss</option>
+                                    <option value="Tanger - Aéroport Ibn Battouta">Tanger - Aéroport Ibn Battouta</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg" @(!Model.HasActiveCard ? "disabled" : "")>
+                                <i class="bi bi-check2-circle"></i> Confirmer la réservation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="pricing-card sticky-top" style="top: 100px;" id="pricingCard">
+                    @if (Model.Voiture != null)
+                    {
+                        <div class="selected-car">
+                            <img src="@Model.Voiture.ImageUrl" alt="@Model.Voiture.Marque @Model.Voiture.Modele" onerror="this.src='https://via.placeholder.com/300x180?text=Pas+d%27image'">
+                            <h5 id="carName">@Model.Voiture.Marque @Model.Voiture.Modele</h5>
+                            <p class="text-muted" id="carInfo">@Model.Voiture.Annee • @Model.Voiture.Categorie</p>
+                        </div>
+                        
+                        <hr>
+                    }
+                    
+                    <h4><i class="bi bi-calculator"></i> Détail du prix</h4>
+                    
+                    <div class="price-breakdown" id="priceBreakdown">
+                        <div class="price-row">
+                            <span><span id="nombreJours">@(Model.Pricing?.NombreJours ?? 2)</span> jour(s) × <span id="prixJour">@(Model.Voiture?.PrixParJour.ToString("N0") ?? "0")</span> MAD</span>
+                            <span id="montantBase">@(Model.Pricing?.MontantBase.ToString("N0") ?? "0") MAD</span>
+                        </div>
+                        
+                        <div class="price-row urgent" id="urgentRow" style="display: @(Model.Pricing?.EstUrgent == true ? "flex" : "none");">
+                            <span class="text-warning">⚡ Frais urgence (+<span id="pourcentUrgence">@(Model.Pricing?.PourcentageFraisUrgence ?? 0)</span>%)</span>
+                            <span class="text-warning" id="fraisUrgence">+@(Model.Pricing?.FraisUrgence.ToString("N0") ?? "0") MAD</span>
+                        </div>
+                        
+                        <div class="price-row discount" id="discountRow" style="display: @(Model.Pricing?.PourcentageRemise > 0 ? "flex" : "none");">
+                            <span class="text-success">🎉 Remise (-<span id="pourcentRemise">@(Model.Pricing?.PourcentageRemise ?? 0)</span>%)</span>
+                            <span class="text-success" id="montantRemise">-@(Model.Pricing?.MontantRemise.ToString("N0") ?? "0") MAD</span>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="price-total">
+                            <span>Total à payer</span>
+                            <span class="total-amount" id="prixTotal">@(Model.Pricing?.PrixTotal.ToString("N0") ?? "0") MAD</span>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-info mt-3">
+                        <p class="small text-muted">
+                            <i class="bi bi-info-circle"></i>
+                            Le paiement sera débité automatiquement de votre carte le jour du début de la location.
+                        </p>
+                    </div>
+                    
+                    @if (Model.CartesBancaires.Any())
+                    {
+                        <div class="selected-card mt-3">
+                            <h6>Carte de paiement</h6>
+                            @{
+                                var carte = Model.CartesBancaires.First();
+                            }
+                            <div class="mini-card">
+                                <i class="bi bi-credit-card"></i>
+                                <span>@carte.NumeroMasque</span>
+                                <span class="badge bg-success">@carte.Solde.ToString("N0") MAD</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateDebut = document.getElementById('dateDebut');
+            const dateFin = document.getElementById('dateFin');
+            const voitureSelect = document.getElementById('voitureSelect');
+            const voitureId = document.getElementById('voitureId');
+            
+            function updatePricing() {
+                const vId = voitureSelect ? voitureSelect.value : voitureId.value;
+                const debut = dateDebut.value;
+                const fin = dateFin.value;
+                
+                if (!vId || !debut || !fin) return;
+                
+                fetch(`/Reservation?handler=CalculatePrice&voitureId=${vId}&dateDebut=${debut}&dateFin=${fin}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) return;
+                        
+                        document.getElementById('nombreJours').textContent = data.nombreJours;
+                        document.getElementById('prixJour').textContent = data.prixParJour.toLocaleString('fr-MA');
+                        document.getElementById('montantBase').textContent = data.montantBase.toLocaleString('fr-MA') + ' MAD';
+                        
+                        // Frais urgence
+                        const urgentRow = document.getElementById('urgentRow');
+                        if (data.estUrgent) {
+                            urgentRow.style.display = 'flex';
+                            document.getElementById('pourcentUrgence').textContent = data.pourcentageFraisUrgence;
+                            document.getElementById('fraisUrgence').textContent = '+' + data.fraisUrgence.toLocaleString('fr-MA') + ' MAD';
+                        } else {
+                            urgentRow.style.display = 'none';
+                        }
+                        
+                        // Remise
+                        const discountRow = document.getElementById('discountRow');
+                        if (data.pourcentageRemise > 0) {
+                            discountRow.style.display = 'flex';
+                            document.getElementById('pourcentRemise').textContent = data.pourcentageRemise;
+                            document.getElementById('montantRemise').textContent = '-' + data.montantRemise.toLocaleString('fr-MA') + ' MAD';
+                        } else {
+                            discountRow.style.display = 'none';
+                        }
+                        
+                        document.getElementById('prixTotal').textContent = data.prixTotal.toLocaleString('fr-MA') + ' MAD';
+                    });
+            }
+            
+            dateDebut?.addEventListener('change', updatePricing);
+            dateFin?.addEventListener('change', updatePricing);
+            voitureSelect?.addEventListener('change', updatePricing);
+        });
+    </script>
+}

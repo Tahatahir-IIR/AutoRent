@@ -1,0 +1,176 @@
+@page
+@model LocationDeVoiture.Pages.Account.MesCartesModel
+@{
+    ViewData["Title"] = "Mes Cartes Bancaires";
+}
+
+<section class="page-hero">
+    <div class="hero-content">
+        <h1><i class="bi bi-credit-card"></i> Mes Cartes Bancaires</h1>
+        <p>Gérez vos moyens de paiement</p>
+    </div>
+</section>
+
+<div class="container py-5">
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-@Model.MessageType alert-dismissible fade show" role="alert">
+            @Model.Message
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Liste des cartes -->
+        <div class="col-lg-7">
+            <div class="cards-section">
+                <h3 class="section-title"><i class="bi bi-wallet2"></i> Mes cartes enregistrées</h3>
+                
+                @if (Model.Cartes.Any())
+                {
+                    <div class="cards-list">
+                        @foreach (var carte in Model.Cartes)
+                        {
+                            <div class="credit-card @(!carte.EstActive ? "inactive" : "")">
+                                <div class="card-chip">
+                                    <i class="bi bi-cpu"></i>
+                                </div>
+                                <div class="card-number">@carte.NumeroMasque</div>
+                                <div class="card-details">
+                                    <div class="card-holder">
+                                        <span class="label">Titulaire</span>
+                                        <span class="value">@carte.NomTitulaire</span>
+                                    </div>
+                                    <div class="card-expiry">
+                                        <span class="label">Expire</span>
+                                        <span class="value">@carte.DateExpiration</span>
+                                    </div>
+                                </div>
+                                <div class="card-balance">
+                                    <span class="label">Solde disponible</span>
+                                    <span class="amount">@carte.Solde.ToString("N0") MAD</span>
+                                </div>
+                                <div class="card-status">
+                                    @if (carte.EstActive)
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary"><i class="bi bi-pause-circle"></i> Inactive</span>
+                                    }
+                                </div>
+                                <div class="card-actions">
+                                    <form method="post" asp-page-handler="Toggle" class="d-inline">
+                                        <input type="hidden" name="id" value="@carte.Id" />
+                                        <button type="submit" class="btn btn-sm @(carte.EstActive ? "btn-outline-warning" : "btn-outline-success")">
+                                            <i class="bi @(carte.EstActive ? "bi-pause" : "bi-play")"></i>
+                                            @(carte.EstActive ? "Désactiver" : "Activer")
+                                        </button>
+                                    </form>
+                                    <form method="post" asp-page-handler="Delete" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette carte ?');">
+                                        <input type="hidden" name="id" value="@carte.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Supprimer
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-section">
+                        <i class="bi bi-credit-card"></i>
+                        <p>Aucune carte enregistrée</p>
+                        <p class="text-muted small">Ajoutez une carte pour pouvoir effectuer des réservations</p>
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <!-- Ajouter une carte -->
+        <div class="col-lg-5">
+            <div class="add-card-section">
+                <h3 class="section-title"><i class="bi bi-plus-circle"></i> Ajouter une carte</h3>
+                
+                <div class="add-card-form">
+                    <div class="demo-notice">
+                        <i class="bi bi-info-circle"></i>
+                        <p><strong>Mode démo :</strong> Entrez n'importe quels numéros valides. Un solde fictif de 50,000 MAD sera automatiquement ajouté.</p>
+                    </div>
+                    
+                    <form method="post">
+                        <div class="mb-3">
+                            <label asp-for="Input.NumeroCarte" class="form-label"></label>
+                            <input asp-for="Input.NumeroCarte" class="form-control" placeholder="1234567890123456" maxlength="16" />
+                            <span asp-validation-for="Input.NumeroCarte" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Input.NomTitulaire" class="form-label"></label>
+                            <input asp-for="Input.NomTitulaire" class="form-control" placeholder="MOHAMMED ALAMI" style="text-transform: uppercase;" />
+                            <span asp-validation-for="Input.NomTitulaire" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label asp-for="Input.DateExpiration" class="form-label"></label>
+                                <input asp-for="Input.DateExpiration" class="form-control" placeholder="12/25" maxlength="5" />
+                                <span asp-validation-for="Input.DateExpiration" class="text-danger"></span>
+                            </div>
+                            <div class="col-6">
+                                <label asp-for="Input.CVV" class="form-label"></label>
+                                <input asp-for="Input.CVV" class="form-control" placeholder="123" maxlength="3" type="password" />
+                                <span asp-validation-for="Input.CVV" class="text-danger"></span>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mt-4">
+                            <i class="bi bi-plus-circle"></i> Ajouter la carte
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="info-section mt-5">
+        <h4><i class="bi bi-shield-check"></i> Comment fonctionne le paiement ?</h4>
+        <div class="row g-4 mt-2">
+            <div class="col-md-4">
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <h5>Paiement automatique</h5>
+                    <p>Le montant est débité automatiquement le jour du début de votre location.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-percent"></i>
+                    </div>
+                    <h5>Remises longue durée</h5>
+                    <p>Profitez de remises : 5% dès 7 jours, jusqu'à 15% pour 1 mois !</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </div>
+                    <h5>Remboursement</h5>
+                    <p>En cas d'annulation acceptée, le montant est remboursé sur votre carte.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

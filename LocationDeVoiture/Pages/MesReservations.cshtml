@@ -1,0 +1,209 @@
+@page
+@model LocationDeVoiture.Pages.MesReservationsModel
+@using LocationDeVoiture.Models
+@{
+    ViewData["Title"] = "Mes Réservations";
+}
+
+<section class="page-hero">
+    <div class="hero-content">
+        <h1>Mes Réservations</h1>
+        <p>Gérez vos locations de véhicules</p>
+    </div>
+</section>
+
+<div class="container py-5">
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-@Model.MessageType alert-dismissible fade show" role="alert">
+            @Model.Message
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Réservations en cours -->
+    <section class="mb-5">
+        <h3 class="section-title"><i class="bi bi-play-circle"></i> En cours</h3>
+        @if (Model.ReservationsEnCours.Any())
+        {
+            <div class="reservations-list">
+                @foreach (var res in Model.ReservationsEnCours)
+                {
+                    <div class="reservation-card active">
+                        <div class="reservation-image">
+                            <img src="@res.Voiture?.ImageUrl" alt="@res.Voiture?.Marque @res.Voiture?.Modele" onerror="this.src='https://via.placeholder.com/200x120?text=Voiture'">
+                        </div>
+                        <div class="reservation-details">
+                            <h4>@res.Voiture?.Marque @res.Voiture?.Modele</h4>
+                            <div class="reservation-info">
+                                <span><i class="bi bi-calendar-range"></i> @res.DateDebut.ToString("dd/MM/yyyy") - @res.DateFin.ToString("dd/MM/yyyy")</span>
+                                <span><i class="bi bi-geo-alt"></i> @res.LieuPriseEnCharge → @res.LieuRetour</span>
+                            </div>
+                            <div class="reservation-price">@res.PrixTotal.ToString("N0") MAD</div>
+                        </div>
+                        <div class="reservation-status">
+                            <span class="badge bg-success">En cours</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-section">
+                <p>Aucune location en cours.</p>
+            </div>
+        }
+    </section>
+
+    <!-- Réservations à venir -->
+    <section class="mb-5">
+        <h3 class="section-title"><i class="bi bi-calendar-event"></i> À venir</h3>
+        @if (Model.ReservationsAVenir.Any())
+        {
+            <div class="reservations-list">
+                @foreach (var res in Model.ReservationsAVenir)
+                {
+                    <div class="reservation-card">
+                        <div class="reservation-image">
+                            <img src="@res.Voiture?.ImageUrl" alt="@res.Voiture?.Marque @res.Voiture?.Modele" onerror="this.src='https://via.placeholder.com/200x120?text=Voiture'">
+                        </div>
+                        <div class="reservation-details">
+                            <h4>@res.Voiture?.Marque @res.Voiture?.Modele</h4>
+                            <div class="reservation-info">
+                                <span><i class="bi bi-calendar-range"></i> @res.DateDebut.ToString("dd/MM/yyyy") - @res.DateFin.ToString("dd/MM/yyyy")</span>
+                                <span><i class="bi bi-geo-alt"></i> @res.LieuPriseEnCharge → @res.LieuRetour</span>
+                            </div>
+                            <div class="reservation-price">@res.PrixTotal.ToString("N0") MAD</div>
+                        </div>
+                        <div class="reservation-status">
+                            @switch (res.Statut)
+                            {
+                                case StatutReservation.EnAttente:
+                                    <span class="badge bg-warning">En attente</span>
+                                    break;
+                                case StatutReservation.Confirmee:
+                                    <span class="badge bg-success">Confirmée</span>
+                                    break;
+                                case StatutReservation.DemandeAnnulation:
+                                    <span class="badge bg-orange">Annulation demandée</span>
+                                    break;
+                            }
+                        </div>
+                        <div class="reservation-actions">
+                            @if (res.Statut != StatutReservation.DemandeAnnulation && res.Statut != StatutReservation.Annulee)
+                            {
+                                <button type="button" class="btn btn-outline-danger btn-sm" 
+                                        data-bs-toggle="modal" data-bs-target="#cancelModal-@res.Id">
+                                    <i class="bi bi-x-circle"></i> Demander annulation
+                                </button>
+                                
+                                <!-- Modal d'annulation -->
+                                <div class="modal fade" id="cancelModal-@res.Id" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Demande d'annulation</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form method="post" asp-page-handler="DemanderAnnulation">
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="id" value="@res.Id" />
+                                                    <p>Êtes-vous sûr de vouloir demander l'annulation de cette réservation ?</p>
+                                                    <p class="text-muted small">
+                                                        <strong>@res.Voiture?.Marque @res.Voiture?.Modele</strong><br>
+                                                        Du @res.DateDebut.ToString("dd/MM/yyyy") au @res.DateFin.ToString("dd/MM/yyyy")
+                                                    </p>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Raison de l'annulation</label>
+                                                        <textarea name="raison" class="form-control" rows="3" required 
+                                                                  placeholder="Veuillez indiquer la raison de votre demande..."></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <button type="submit" class="btn btn-danger">Confirmer la demande</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            @if (res.Statut == StatutReservation.DemandeAnnulation)
+                            {
+                                <span class="text-muted small">
+                                    <i class="bi bi-clock-history"></i> En attente de validation
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-section">
+                <p>Aucune réservation à venir.</p>
+                <a href="/Voitures" class="btn btn-primary">
+                    <i class="bi bi-car-front"></i> Réserver un véhicule
+                </a>
+            </div>
+        }
+    </section>
+
+    <!-- Historique -->
+    <section>
+        <h3 class="section-title"><i class="bi bi-clock-history"></i> Historique</h3>
+        @if (Model.ReservationsPassees.Any())
+        {
+            <div class="reservations-list history">
+                @foreach (var res in Model.ReservationsPassees)
+                {
+                    <div class="reservation-card past">
+                        <div class="reservation-image">
+                            <img src="@res.Voiture?.ImageUrl" alt="@res.Voiture?.Marque @res.Voiture?.Modele" onerror="this.src='https://via.placeholder.com/200x120?text=Voiture'">
+                        </div>
+                        <div class="reservation-details">
+                            <h4>@res.Voiture?.Marque @res.Voiture?.Modele</h4>
+                            <div class="reservation-info">
+                                <span><i class="bi bi-calendar-range"></i> @res.DateDebut.ToString("dd/MM/yyyy") - @res.DateFin.ToString("dd/MM/yyyy")</span>
+                                <span><i class="bi bi-geo-alt"></i> @res.LieuPriseEnCharge → @res.LieuRetour</span>
+                            </div>
+                            <div class="reservation-price">@res.PrixTotal.ToString("N0") MAD</div>
+                        </div>
+                        <div class="reservation-status">
+                            @switch (res.Statut)
+                            {
+                                case StatutReservation.Terminee:
+                                    <span class="badge bg-secondary">Terminée</span>
+                                    break;
+                                case StatutReservation.Annulee:
+                                    <span class="badge bg-danger">Annulée</span>
+                                    break;
+                                case StatutReservation.Refusee:
+                                    <span class="badge bg-danger">Refusée</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-secondary">Passée</span>
+                                    break;
+                            }
+                        </div>
+                        @if (res.Statut == StatutReservation.Annulee && !string.IsNullOrEmpty(res.CommentaireAdmin))
+                        {
+                            <div class="admin-comment">
+                                <small><i class="bi bi-chat-quote"></i> @res.CommentaireAdmin</small>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-section">
+                <p>Aucune réservation passée.</p>
+            </div>
+        }
+    </section>
+</div>
+

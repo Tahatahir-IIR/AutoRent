@@ -1,0 +1,158 @@
+@page
+@model LocationDeVoiture.Pages.Admin.IndexModel
+@using LocationDeVoiture.Models
+@{
+    ViewData["Title"] = "Administration";
+    Layout = "_Layout";
+}
+
+<section class="page-hero admin-hero">
+    <div class="hero-content">
+        <h1><i class="bi bi-speedometer2"></i> Tableau de bord</h1>
+        <p>Gérez les réservations et les demandes</p>
+    </div>
+</section>
+
+<div class="container py-5">
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>@Model.TotalReservations</h3>
+                    <p>Total réservations</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card warning">
+                <div class="stat-icon bg-warning">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>@Model.ReservationsEnAttente</h3>
+                    <p>En attente</p>
+                </div>
+                @if (Model.ReservationsEnAttente > 0)
+                {
+                    <a href="/Admin/Reservations?statut=EnAttente" class="stat-link">Voir</a>
+                }
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card danger">
+                <div class="stat-icon bg-danger">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>@Model.DemandesAnnulation</h3>
+                    <p>Demandes d'annulation</p>
+                </div>
+                @if (Model.DemandesAnnulation > 0)
+                {
+                    <a href="/Admin/Reservations?statut=DemandeAnnulation" class="stat-link">Traiter</a>
+                }
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card success">
+                <div class="stat-icon bg-success">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>@Model.RevenuTotal.ToString("N0") MAD</h3>
+                    <p>Revenu total</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="admin-actions mb-5">
+        <h4>Actions rapides</h4>
+        <div class="d-flex gap-3 flex-wrap">
+            <a href="/Admin/Reservations" class="btn btn-primary">
+                <i class="bi bi-list-check"></i> Toutes les réservations
+            </a>
+            <a href="/Admin/Reservations?statut=EnAttente" class="btn btn-warning">
+                <i class="bi bi-hourglass-split"></i> À confirmer (@Model.ReservationsEnAttente)
+            </a>
+            <a href="/Admin/Reservations?statut=DemandeAnnulation" class="btn btn-danger">
+                <i class="bi bi-x-circle"></i> Annulations (@Model.DemandesAnnulation)
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Reservations -->
+    <div class="admin-section">
+        <h4><i class="bi bi-clock-history"></i> Dernières réservations</h4>
+        <div class="table-responsive">
+            <table class="table admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Client</th>
+                        <th>Véhicule</th>
+                        <th>Dates</th>
+                        <th>Total</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var res in Model.DernieresReservations)
+                    {
+                        <tr>
+                            <td><strong>#@res.Id</strong></td>
+                            <td>
+                                <div class="client-info">
+                                    <span>@res.User?.Prenom @res.User?.Nom</span>
+                                    <small class="text-muted">@res.User?.Email</small>
+                                </div>
+                            </td>
+                            <td>@res.Voiture?.Marque @res.Voiture?.Modele</td>
+                            <td>
+                                <small>
+                                    @res.DateDebut.ToString("dd/MM") - @res.DateFin.ToString("dd/MM/yy")
+                                </small>
+                            </td>
+                            <td>@res.PrixTotal.ToString("N0") MAD</td>
+                            <td>
+                                @switch (res.Statut)
+                                {
+                                    case StatutReservation.EnAttente:
+                                        <span class="badge bg-warning">En attente</span>
+                                        break;
+                                    case StatutReservation.Confirmee:
+                                        <span class="badge bg-success">Confirmée</span>
+                                        break;
+                                    case StatutReservation.DemandeAnnulation:
+                                        <span class="badge bg-orange">Annulation demandée</span>
+                                        break;
+                                    case StatutReservation.Annulee:
+                                        <span class="badge bg-danger">Annulée</span>
+                                        break;
+                                    case StatutReservation.Terminee:
+                                        <span class="badge bg-secondary">Terminée</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@res.Statut</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                <a href="/Admin/Reservations/@res.Id" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

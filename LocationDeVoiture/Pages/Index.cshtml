@@ -1,0 +1,219 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Accueil";
+}
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <span class="accent">Louez</span> votre voiture<br>au Maroc
+        </h1>
+        <p class="hero-subtitle">
+            De Casablanca à Marrakech, explorez le Royaume avec nos véhicules premium. Réservation simple et rapide.
+        </p>
+        
+        <div class="hero-search">
+            <form action="/Voitures" method="get" class="search-form">
+                <div class="search-field">
+                    <i class="bi bi-geo-alt"></i>
+                    <select name="lieu" class="form-control">
+                        <option>Casablanca</option>
+                        <option>Marrakech</option>
+                        <option>Rabat</option>
+                        <option>Agadir</option>
+                        <option>Fès</option>
+                        <option>Tanger</option>
+                    </select>
+                </div>
+                <div class="search-field">
+                    <i class="bi bi-calendar"></i>
+                    <input type="date" class="form-control" value="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")">
+                </div>
+                <div class="search-field">
+                    <i class="bi bi-calendar-check"></i>
+                    <input type="date" class="form-control" value="@DateTime.Today.AddDays(4).ToString("yyyy-MM-dd")">
+                </div>
+                <button type="submit" class="btn btn-accent">
+                    <i class="bi bi-search"></i> Rechercher
+                </button>
+            </form>
+        </div>
+        
+        <div class="hero-stats">
+            <div class="stat">
+                <span class="stat-number">500+</span>
+                <span class="stat-label">Véhicules</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number">12</span>
+                <span class="stat-label">Villes</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number">24/7</span>
+                <span class="stat-label">Assistance</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="categories-section">
+    <div class="container">
+        <div class="section-header">
+            <h2>Nos catégories</h2>
+            <p>Trouvez le véhicule parfait pour chaque occasion</p>
+        </div>
+        
+        <div class="categories-grid">
+            @{
+                var categoryIcons = new Dictionary<string, string>
+                {
+                    { "Économique", "bi-piggy-bank" },
+                    { "Confort", "bi-star" },
+                    { "Premium", "bi-gem" },
+                    { "SUV", "bi-truck" },
+                    { "4x4", "bi-compass" },
+                    { "Sport", "bi-speedometer2" }
+                };
+            }
+            @foreach (var cat in Model.Categories)
+            {
+                var icon = categoryIcons.ContainsKey(cat) ? categoryIcons[cat] : "bi-car-front";
+                <a href="/Voitures?Categorie=@cat" class="category-card">
+                    <div class="category-icon">
+                        <i class="bi @icon"></i>
+                    </div>
+                    <h4>@cat</h4>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Featured Cars Section -->
+<section class="featured-section">
+    <div class="container">
+        <div class="section-header">
+            <h2>Véhicules populaires</h2>
+            <p>Les préférés de nos clients</p>
+            <a href="/Voitures" class="btn btn-outline-primary">Voir tous les véhicules</a>
+        </div>
+        
+        <div class="cars-grid">
+            @foreach (var voiture in Model.VoituresPopulaires)
+            {
+                <div class="car-card">
+                    <div class="car-image">
+                        <img src="@voiture.ImageUrl" alt="@voiture.Marque @voiture.Modele" onerror="this.src='https://via.placeholder.com/400x250?text=Pas+d%27image'">
+                        <span class="car-category">@voiture.Categorie</span>
+                        @if (voiture.GPS)
+                        {
+                            <span class="car-badge"><i class="bi bi-geo-alt-fill"></i> GPS</span>
+                        }
+                    </div>
+                    <div class="car-body">
+                        <h5>@voiture.Marque @voiture.Modele</h5>
+                        <p class="car-year">@voiture.Annee</p>
+                        
+                        <div class="car-features">
+                            <span><i class="bi bi-fuel-pump"></i> @voiture.Carburant</span>
+                            <span><i class="bi bi-gear"></i> @voiture.Transmission</span>
+                            <span><i class="bi bi-people"></i> @voiture.NombrePlaces</span>
+                        </div>
+                        
+                        <div class="car-footer">
+                            <div class="car-price">
+                                <span class="price">@voiture.PrixParJour.ToString("N0") MAD</span>
+                                <span class="period">/ jour</span>
+                            </div>
+                            <a href="/Voitures/Details/@voiture.Id" class="btn btn-primary btn-sm">
+                                Réserver
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Us Section -->
+<section class="why-us-section">
+    <div class="container">
+        <div class="section-header light">
+            <h2>Pourquoi nous choisir ?</h2>
+            <p>Des avantages exclusifs pour une expérience incomparable</p>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h4>Assurance complète</h4>
+                <p>Tous nos véhicules sont couverts par une assurance tous risques incluse dans le tarif.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-currency-exchange"></i>
+                </div>
+                <h4>Meilleurs prix</h4>
+                <p>Prix compétitifs en Dirhams. Pas de frais cachés, tout est transparent.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-headset"></i>
+                </div>
+                <h4>Support 24/7</h4>
+                <p>Notre équipe est disponible jour et nuit pour vous assister partout au Maroc.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-geo-alt"></i>
+                </div>
+                <h4>12 agences</h4>
+                <p>Présent dans toutes les grandes villes : Casablanca, Marrakech, Rabat, Agadir...</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-speedometer2"></i>
+                </div>
+                <h4>Kilométrage illimité</h4>
+                <p>Parcourez le Maroc sans limite. Du Sahara à l'Atlas, explorez librement.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-car-front"></i>
+                </div>
+                <h4>Véhicules récents</h4>
+                <p>Notre flotte est composée de véhicules modernes et bien entretenus.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-content">
+            <h2>Prêt à explorer le Maroc ?</h2>
+            <p>Réservez votre véhicule et partez à l'aventure dès aujourd'hui.</p>
+            <div class="cta-buttons">
+                <a href="/Voitures" class="btn btn-light btn-lg">
+                    <i class="bi bi-car-front"></i> Voir nos véhicules
+                </a>
+                <a href="/Contact" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-whatsapp"></i> WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+</section>

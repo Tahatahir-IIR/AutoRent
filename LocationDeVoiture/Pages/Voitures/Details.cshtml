@@ -1,0 +1,154 @@
+@page "{id:int}"
+@model LocationDeVoiture.Pages.Voitures.DetailsModel
+@{
+    ViewData["Title"] = $"{Model.Voiture?.Marque} {Model.Voiture?.Modele}";
+}
+
+@if (Model.Voiture != null)
+{
+    <section class="car-details-hero" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('@Model.Voiture.ImageUrl');">
+        <div class="hero-content">
+            <span class="badge bg-accent">@Model.Voiture.Categorie</span>
+            <h1>@Model.Voiture.Marque @Model.Voiture.Modele</h1>
+            <p class="year">@Model.Voiture.Annee</p>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="detail-card">
+                    <div class="car-main-image">
+                        <img src="@Model.Voiture.ImageUrl" alt="@Model.Voiture.Marque @Model.Voiture.Modele" onerror="this.src='https://via.placeholder.com/800x500?text=Pas+d%27image'">
+                    </div>
+                    
+                    <h3>Description</h3>
+                    <p class="description">@Model.Voiture.Description</p>
+                    
+                    <h3 class="mt-4">Caractéristiques</h3>
+                    <div class="specs-grid">
+                        <div class="spec-item">
+                            <i class="bi bi-fuel-pump"></i>
+                            <span class="spec-label">Carburant</span>
+                            <span class="spec-value">@Model.Voiture.Carburant</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="bi bi-gear"></i>
+                            <span class="spec-label">Transmission</span>
+                            <span class="spec-value">@Model.Voiture.Transmission</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="bi bi-people"></i>
+                            <span class="spec-label">Places</span>
+                            <span class="spec-value">@Model.Voiture.NombrePlaces</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="bi bi-door-open"></i>
+                            <span class="spec-label">Portes</span>
+                            <span class="spec-value">@Model.Voiture.NombrePortes</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="bi bi-snow"></i>
+                            <span class="spec-label">Climatisation</span>
+                            <span class="spec-value">@(Model.Voiture.Climatisation ? "Oui" : "Non")</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="bi bi-geo-alt"></i>
+                            <span class="spec-label">GPS</span>
+                            <span class="spec-value">@(Model.Voiture.GPS ? "Inclus" : "Non")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="booking-card sticky-top" style="top: 100px;">
+                    <div class="price-display">
+                        <span class="price">@Model.Voiture.PrixParJour.ToString("N0") MAD</span>
+                        <span class="period">/ jour</span>
+                    </div>
+                    
+                    <div class="availability">
+                        @if (Model.Voiture.Disponible)
+                        {
+                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Disponible</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Indisponible</span>
+                        }
+                    </div>
+                    
+                    <hr>
+                    
+                    <ul class="included-list">
+                        <li><i class="bi bi-check2"></i> Kilométrage illimité</li>
+                        <li><i class="bi bi-check2"></i> Assurance tous risques</li>
+                        <li><i class="bi bi-check2"></i> Assistance 24h/24</li>
+                        <li><i class="bi bi-check2"></i> Livraison possible</li>
+                    </ul>
+                    
+                    @if (Model.Voiture.Disponible)
+                    {
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <a href="/Reservation?voitureId=@Model.Voiture.Id" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-calendar-check"></i> Réserver maintenant
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="/Account/Login?returnUrl=/Reservation?voitureId=@Model.Voiture.Id" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-box-arrow-in-right"></i> Se connecter pour réserver
+                            </a>
+                            <p class="text-center text-muted mt-2 small">
+                                <a href="/Account/Register">Créer un compte</a>
+                            </p>
+                        }
+                    }
+                    else
+                    {
+                        <button class="btn btn-secondary btn-lg w-100" disabled>
+                            Non disponible
+                        </button>
+                    }
+                    
+                    <div class="contact-info mt-3">
+                        <p class="mb-1"><i class="bi bi-telephone"></i> +212 5 22 XX XX XX</p>
+                        <p class="mb-0"><i class="bi bi-whatsapp"></i> +212 6 XX XX XX XX</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        @if (Model.VoituresSimilaires.Any())
+        {
+            <section class="similar-cars mt-5">
+                <h3>Véhicules similaires</h3>
+                <div class="row g-4 mt-2">
+                    @foreach (var voiture in Model.VoituresSimilaires)
+                    {
+                        <div class="col-md-4">
+                            <div class="car-card">
+                                <div class="car-image">
+                                    <img src="@voiture.ImageUrl" alt="@voiture.Marque @voiture.Modele" onerror="this.src='https://via.placeholder.com/400x250?text=Pas+d%27image'">
+                                    <span class="car-category">@voiture.Categorie</span>
+                                </div>
+                                <div class="car-body">
+                                    <h5>@voiture.Marque @voiture.Modele</h5>
+                                    <div class="car-footer">
+                                        <div class="car-price">
+                                            <span class="price">@voiture.PrixParJour.ToString("N0") MAD</span>
+                                            <span class="period">/ jour</span>
+                                        </div>
+                                        <a href="/Voitures/Details/@voiture.Id" class="btn btn-primary btn-sm">Voir</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+}

@@ -1,0 +1,240 @@
+@page "{id:int?}"
+@model LocationDeVoiture.Pages.Admin.ReservationsModel
+@using LocationDeVoiture.Models
+@{
+    ViewData["Title"] = "Gestion des réservations";
+}
+
+<section class="page-hero admin-hero">
+    <div class="hero-content">
+        <h1><i class="bi bi-list-check"></i> Gestion des réservations</h1>
+        <p>Confirmez, refusez ou traitez les demandes d'annulation</p>
+    </div>
+</section>
+
+<div class="container py-5">
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-@Model.MessageType alert-dismissible fade show" role="alert">
+            @Model.Message
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filters -->
+    <div class="filter-bar mb-4">
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/Admin/Reservations" class="btn @(string.IsNullOrEmpty(Model.Statut) ? "btn-primary" : "btn-outline-secondary")">
+                Toutes
+            </a>
+            <a href="/Admin/Reservations?statut=EnAttente" class="btn @(Model.Statut == "EnAttente" ? "btn-warning" : "btn-outline-warning")">
+                <i class="bi bi-hourglass-split"></i> En attente
+            </a>
+            <a href="/Admin/Reservations?statut=DemandeAnnulation" class="btn @(Model.Statut == "DemandeAnnulation" ? "btn-danger" : "btn-outline-danger")">
+                <i class="bi bi-x-circle"></i> Demandes d'annulation
+            </a>
+            <a href="/Admin/Reservations?statut=Confirmee" class="btn @(Model.Statut == "Confirmee" ? "btn-success" : "btn-outline-success")">
+                <i class="bi bi-check-circle"></i> Confirmées
+            </a>
+        </div>
+    </div>
+
+    @if (!Model.Reservations.Any())
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h4>Aucune réservation trouvée</h4>
+            <p>Il n'y a pas de réservation correspondant à vos critères.</p>
+        </div>
+    }
+    else
+    {
+        <div class="reservations-admin-list">
+            @foreach (var res in Model.Reservations)
+            {
+                <div class="reservation-admin-card @(res.Statut == StatutReservation.DemandeAnnulation ? "cancellation-request" : "")">
+                    <div class="reservation-header">
+                        <span class="reservation-id">#@res.Id</span>
+                        @switch (res.Statut)
+                        {
+                            case StatutReservation.EnAttente:
+                                <span class="badge bg-warning">En attente</span>
+                                break;
+                            case StatutReservation.Confirmee:
+                                <span class="badge bg-success">Confirmée</span>
+                                break;
+                            case StatutReservation.DemandeAnnulation:
+                                <span class="badge bg-orange pulse">Demande d'annulation</span>
+                                break;
+                            case StatutReservation.Annulee:
+                                <span class="badge bg-danger">Annulée</span>
+                                break;
+                            case StatutReservation.Refusee:
+                                <span class="badge bg-dark">Refusée</span>
+                                break;
+                            case StatutReservation.Terminee:
+                                <span class="badge bg-secondary">Terminée</span>
+                                break;
+                        }
+                        <span class="reservation-date">@res.DateReservation.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    
+                    <div class="reservation-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="info-block">
+                                    <h6>Client</h6>
+                                    <p><strong>@res.User?.Prenom @res.User?.Nom</strong></p>
+                                    <small>@res.User?.Email</small><br>
+                                    <small>@res.User?.PhoneNumber</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="info-block">
+                                    <h6>Véhicule</h6>
+                                    <p><strong>@res.Voiture?.Marque @res.Voiture?.Modele</strong></p>
+                                    <small>@res.Voiture?.Categorie - @res.Voiture?.PrixParJour.ToString("N0") MAD/jour</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="info-block">
+                                    <h6>Dates & Lieu</h6>
+                                    <p><strong>@res.DateDebut.ToString("dd/MM/yyyy") → @res.DateFin.ToString("dd/MM/yyyy")</strong></p>
+                                    <small>@res.LieuPriseEnCharge</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="info-block">
+                                    <h6>Total</h6>
+                                    <p class="price"><strong>@res.PrixTotal.ToString("N0") MAD</strong></p>
+                                    <small>@((res.DateFin - res.DateDebut).Days) jours</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        @if (res.Statut == StatutReservation.DemandeAnnulation && !string.IsNullOrEmpty(res.RaisonAnnulation))
+                        {
+                            <div class="cancellation-reason">
+                                <h6><i class="bi bi-chat-quote"></i> Raison de la demande d'annulation :</h6>
+                                <p>@res.RaisonAnnulation</p>
+                                <small class="text-muted">Demandée le @res.DateDemandeAnnulation?.ToString("dd/MM/yyyy à HH:mm")</small>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="reservation-actions">
+                        @if (res.Statut == StatutReservation.EnAttente)
+                        {
+                            <form method="post" asp-page-handler="Confirmer" class="d-inline">
+                                <input type="hidden" name="id" value="@res.Id" />
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check-lg"></i> Confirmer
+                                </button>
+                            </form>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#refuserModal-@res.Id">
+                                <i class="bi bi-x-lg"></i> Refuser
+                            </button>
+                            
+                            <!-- Modal Refuser -->
+                            <div class="modal fade" id="refuserModal-@res.Id" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Refuser la réservation #@res.Id</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form method="post" asp-page-handler="Refuser">
+                                            <div class="modal-body">
+                                                <input type="hidden" name="id" value="@res.Id" />
+                                                <div class="mb-3">
+                                                    <label class="form-label">Commentaire (optionnel)</label>
+                                                    <textarea name="commentaire" class="form-control" rows="3" 
+                                                              placeholder="Raison du refus..."></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                <button type="submit" class="btn btn-danger">Confirmer le refus</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (res.Statut == StatutReservation.DemandeAnnulation)
+                        {
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#accepterAnnulationModal-@res.Id">
+                                <i class="bi bi-check-lg"></i> Accepter l'annulation
+                            </button>
+                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#refuserAnnulationModal-@res.Id">
+                                <i class="bi bi-x-lg"></i> Refuser l'annulation
+                            </button>
+                            
+                            <!-- Modal Accepter Annulation -->
+                            <div class="modal fade" id="accepterAnnulationModal-@res.Id" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Accepter l'annulation #@res.Id</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form method="post" asp-page-handler="AccepterAnnulation">
+                                            <div class="modal-body">
+                                                <input type="hidden" name="id" value="@res.Id" />
+                                                <p>Voulez-vous accepter cette demande d'annulation ?</p>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Commentaire (optionnel)</label>
+                                                    <textarea name="commentaire" class="form-control" rows="2" 
+                                                              placeholder="Message pour le client..."></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                <button type="submit" class="btn btn-success">Accepter l'annulation</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Modal Refuser Annulation -->
+                            <div class="modal fade" id="refuserAnnulationModal-@res.Id" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Refuser l'annulation #@res.Id</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form method="post" asp-page-handler="RefuserAnnulation">
+                                            <div class="modal-body">
+                                                <input type="hidden" name="id" value="@res.Id" />
+                                                <p>La réservation sera maintenue comme confirmée.</p>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Commentaire (optionnel)</label>
+                                                    <textarea name="commentaire" class="form-control" rows="2" 
+                                                              placeholder="Raison du refus d'annulation..."></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                <button type="submit" class="btn btn-warning">Refuser l'annulation</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    
+    <div class="mt-4">
+        <a href="/Admin" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+

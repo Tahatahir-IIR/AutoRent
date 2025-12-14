@@ -1,0 +1,89 @@
+@page
+@model LocationDeVoiture.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Créer un compte";
+}
+
+<section class="auth-section">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <i class="bi bi-person-plus-fill"></i>
+                <h2>Créer un compte</h2>
+                <p>Rejoignez AutoRent Maroc et réservez facilement</p>
+            </div>
+            
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Input.Prenom" class="form-label"></label>
+                        <input asp-for="Input.Prenom" class="form-control" placeholder="Votre prénom" />
+                        <span asp-validation-for="Input.Prenom" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label asp-for="Input.Nom" class="form-label"></label>
+                        <input asp-for="Input.Nom" class="form-control" placeholder="Votre nom" />
+                        <span asp-validation-for="Input.Nom" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label asp-for="Input.Email" class="form-label"></label>
+                        <input asp-for="Input.Email" class="form-control" placeholder="exemple@email.com" />
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label asp-for="Input.PhoneNumber" class="form-label"></label>
+                        <input asp-for="Input.PhoneNumber" class="form-control" placeholder="+212 6XX XXX XXX" />
+                        <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label asp-for="Input.Ville" class="form-label"></label>
+                        <select asp-for="Input.Ville" class="form-select">
+                            <option value="">Sélectionnez une ville</option>
+                            <option value="Casablanca">Casablanca</option>
+                            <option value="Rabat">Rabat</option>
+                            <option value="Marrakech">Marrakech</option>
+                            <option value="Fès">Fès</option>
+                            <option value="Tanger">Tanger</option>
+                            <option value="Agadir">Agadir</option>
+                            <option value="Oujda">Oujda</option>
+                            <option value="Meknès">Meknès</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label asp-for="Input.Password" class="form-label"></label>
+                        <input asp-for="Input.Password" class="form-control" placeholder="••••••••" />
+                        <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label asp-for="Input.ConfirmPassword" class="form-label"></label>
+                        <input asp-for="Input.ConfirmPassword" class="form-control" placeholder="••••••••" />
+                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-person-check"></i> Créer mon compte
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Déjà un compte ? <a href="/Account/Login">Se connecter</a></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
