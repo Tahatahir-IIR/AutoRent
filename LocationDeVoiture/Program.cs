@@ -1,4 +1,4 @@
-using LocationDeVoiture.Data;
+﻿using LocationDeVoiture.Data;
 using LocationDeVoiture.Models;
 using LocationDeVoiture.Services;
 using Microsoft.AspNetCore.Identity;
@@ -56,7 +56,7 @@ namespace LocationDeVoiture
                 await db.Database.EnsureCreatedAsync();
                 
                 // Seed admin user
-                await SeedAdminUser(services);
+                await SeedAdminUser(services, app.Configuration);
             }
 
             // Configure the HTTP request pipeline.
@@ -79,7 +79,7 @@ namespace LocationDeVoiture
             app.Run();
         }
 
-        private static async Task SeedAdminUser(IServiceProvider services)
+        private static async Task SeedAdminUser(IServiceProvider services, IConfiguration configuration)
         {
             var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
@@ -94,8 +94,23 @@ namespace LocationDeVoiture
                 }
             }
 
-            // Create admin user
-            var adminEmail = "admin@autorent.ma";
+            // Create admin user. The password is never hardcoded: it comes from
+            // configuration (Seed:AdminPassword in appsettings*.json or user secrets)
+            // or from the SEED_ADMIN_PASSWORD environment variable, which wins if set.
+            var adminEmail = configuration["Seed:AdminEmail"] ?? "admin@autorent.ma";
+            var adminPassword = Environment.GetEnvironmentVariable("SEED_ADMIN_PASSWORD");
+            if (string.IsNullOrWhiteSpace(adminPassword))
+            {
+                adminPassword = configuration["Seed:AdminPassword"];
+            }
+            if (string.IsNullOrWhiteSpace(adminPassword))
+            {
+                throw new InvalidOperationException(
+                    "No admin password configured. Set the configuration key 'Seed:AdminPassword' " +
+                    "(for example with 'dotnet user-secrets set \"Seed:AdminPassword\" \"<password>\"' " +
+                    "or the environment variable Seed__AdminPassword) or set SEED_ADMIN_PASSWORD.");
+            }
+
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             
             if (adminUser == null)
@@ -111,11 +126,13 @@ namespace LocationDeVoiture
                     DateInscription = DateTime.Now
                 };
 
-                var result = await userManager.CreateAsync(adminUser, "Admin123");
-                if (result.Succeeded)
+                var result = await userManager.CreateAsync(adminUser, adminPassword);
+                if (!result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                    var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                    throw new InvalidOperationException($"Could not create the seeded admin user: {errors}");
                 }
+                await userManager.AddToRoleAsync(adminUser, "Admin");
             }
         }
     }

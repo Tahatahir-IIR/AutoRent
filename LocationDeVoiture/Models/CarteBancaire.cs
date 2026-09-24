@@ -1,4 +1,5 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LocationDeVoiture.Models
 {
@@ -20,6 +21,8 @@ namespace LocationDeVoiture.Models
         [RegularExpression(@"^(0[1-9]|1[0-2])\/([0-9]{2})$", ErrorMessage = "Format: MM/YY")]
         public string DateExpiration { get; set; } = string.Empty;
         
+        // Le CVV est demandé dans le formulaire (simulation) mais n'est jamais enregistré en base.
+        [NotMapped]
         [Required(ErrorMessage = "Le CVV est requis")]
         [StringLength(3, MinimumLength = 3, ErrorMessage = "Le CVV doit contenir 3 chiffres")]
         public string CVV { get; set; } = string.Empty;
